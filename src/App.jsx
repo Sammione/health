@@ -5,10 +5,7 @@ import './index.css';
 
 const App = () => {
   const [view, setView] = useState('HOME');
-  const [history, setHistory] = useState([
-    { id: 1, bpm: 72, si: 0.65, status: 'Normal', date: '2h ago' },
-    { id: 2, bpm: 78, si: 0.70, status: 'Normal', date: 'Yesterday' }
-  ]);
+  const [history, setHistory] = useState([]);
   const [currentResult, setCurrentResult] = useState(null);
   const [aiAnalysis, setAiAnalysis] = useState("");
 
@@ -29,6 +26,7 @@ const App = () => {
     };
     
     setCurrentResult(result);
+    setHistory(prev => [{ id: Date.now(), bpm: result.bpm, si: result.si, status: result.status === 'SAFE' ? 'Normal' : 'High', date: 'Just now' }, ...prev]);
     setView('RESULTS');
     
     // Call AI for analysis
@@ -72,7 +70,15 @@ const App = () => {
       setAiAnalysis(advice);
       speak(advice); // Automatically speak the result
     } catch (err) {
-      const fallback = "Mama, no worry, you dey very safe! Just chop better soup and rest well.";
+      console.error(err);
+      let fallback = "";
+      if (result.status === 'SAFE') {
+        fallback = "Mama, no worry, you dey very safe! Just chop better food and rest well.";
+      } else if (result.status === 'WARNING') {
+        fallback = "Mama, take am easy today. Make you rest and drink plenty water.";
+      } else {
+        fallback = "Abeg, call doctor sharp-sharp! Your vitals high small, no delay!";
+      }
       setAiAnalysis(fallback);
       speak(fallback);
     }
@@ -106,6 +112,11 @@ const App = () => {
           <h3 style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <History size={18} /> Recent Checks
           </h3>
+          {history.length === 0 && (
+            <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>
+              No recent checks. Do a scan to see your history!
+            </div>
+          )}
           {history.map(item => (
             <div key={item.id} className="glass-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 20px', marginBottom: '12px' }}>
               <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
@@ -192,10 +203,18 @@ const App = () => {
       {/* Footer Nav */}
       <div style={{ position: 'fixed', bottom: '20px', left: '50%', transform: 'translateX(-50%)', width: 'calc(100% - 40px)', maxWidth: '440px', zIndex: 100 }}>
         <div className="glass-card" style={{ marginBottom: 0, padding: '15px', display: 'flex', justifyContent: 'space-around', borderRadius: '30px' }}>
-          <Heart color="var(--primary)" fill="var(--primary)" />
-          <Activity color="var(--text-muted)" />
-          <MessageSquare color="var(--text-muted)" />
-          <AlertTriangle color="var(--text-muted)" />
+          <button onClick={() => setView('HOME')} style={{background:'none', border:'none', cursor:'pointer', padding: '5px'}}>
+            <Heart color={view === 'HOME' ? "var(--primary)" : "var(--text-muted)"} fill={view === 'HOME' ? "var(--primary)" : "none"} />
+          </button>
+          <button onClick={() => setView('SCANNING')} style={{background:'none', border:'none', cursor:'pointer', padding: '5px'}}>
+            <Activity color={view === 'SCANNING' ? "var(--primary)" : "var(--text-muted)"} />
+          </button>
+          <button onClick={() => currentResult && setView('RESULTS')} style={{background:'none', border:'none', cursor:'pointer', padding: '5px', opacity: currentResult ? 1 : 0.4}}>
+            <MessageSquare color={view === 'RESULTS' ? "var(--primary)" : "var(--text-muted)"} />
+          </button>
+          <button onClick={() => alert("SOS Emergency Alert triggered!")} style={{background:'none', border:'none', cursor:'pointer', padding: '5px'}}>
+            <AlertTriangle color="var(--text-muted)" />
+          </button>
         </div>
       </div>
     </div>

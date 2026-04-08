@@ -82,26 +82,29 @@ const PpgScanner = ({ onResult, onCancel }) => {
     signalBuffer.current.push(value);
     if (signalBuffer.current.length > 100) signalBuffer.current.shift();
 
-    // Peak detection (simplified)
+    // Peak detection (smoothed)
     const now = Date.now();
-    const threshold = 0.4; // Sensitivity adjustment
+    const threshold = 0.8; // Stricter threshold
+    const timeDiff = now - lastPeak.current;
     
     // Logic to find peaks in the red channel oscillation
-    // This is a simplified hackathon version
-    if (value > 150) { // Finger is covering camera
-        if (now - lastPeak.current > 400 && now - lastPeak.current < 1500) {
-            // Potential pulse detected
+    if (value > 150) { 
+        if (timeDiff > 450) { // Min interval (avoids double peaks)
             const diff = value - (signalBuffer.current[signalBuffer.current.length - 2] || value);
             if (diff > threshold) {
-               const currentBpm = Math.round(60000 / (now - lastPeak.current));
-               if (currentBpm > 40 && currentBpm < 180) {
-                   setBpm(currentBpm);
-                   peaks.current.push(currentBpm);
+               const rawBpm = Math.round(60000 / timeDiff);
+               if (rawBpm >= 50 && rawBpm <= 130) { // Limit to realistic bounds for accuracy
+                   setBpm(prev => {
+                       // Smooth the BPM so it doesn't jump wildly
+                       const smoothed = prev === 0 ? rawBpm : Math.round((prev * 0.6) + (rawBpm * 0.4));
+                       peaks.current.push(smoothed);
+                       return smoothed;
+                   });
                }
                lastPeak.current = now;
             }
-        } else if (now - lastPeak.current > 1500) {
-            lastPeak.current = now;
+        } else if (timeDiff > 2000) {
+            lastPeak.current = now; // reset if stuck
         }
         
         // ONLY progress the scan when a finger is covering the lens properly!
