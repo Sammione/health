@@ -28,12 +28,20 @@ body {
   background-image: 
     radial-gradient(circle at 0% 0%, rgba(225, 29, 72, 0.15) 0%, transparent 40%),
     radial-gradient(circle at 100% 100%, rgba(45, 212, 191, 0.1) 0%, transparent 40%);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
 }
 
 #root {
   width: 100%;
   max-width: 480px;
+  min-height: 100vh;
   margin: 0 auto;
+  position: relative;
+  background-color: var(--bg-dark);
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
+  overflow-x: hidden;
 }
 
 .glass-card {
@@ -75,7 +83,7 @@ body {
 }
 
 .vignette {
-  position: fixed;
+  position: absolute;
   top: 0;
   left: 0;
   width: 100%;

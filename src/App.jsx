@@ -79,8 +79,8 @@ const App = () => {
   };
 
   return (
-    <div className="container" style={{ padding: '20px', minHeight: '100vh' }}>
-      <div className="vignette"></div>
+    <div className="container" style={{ padding: '20px', minHeight: '100vh', paddingBottom: '100px', position: 'relative' }}>
+      <div className="vignette" style={{ position: 'absolute' }}></div>
 
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
@@ -190,7 +190,7 @@ const App = () => {
       )}
 
       {/* Footer Nav */}
-      <div style={{ position: 'fixed', bottom: '20px', left: '20px', right: '20px' }}>
+      <div style={{ position: 'fixed', bottom: '20px', left: '50%', transform: 'translateX(-50%)', width: 'calc(100% - 40px)', maxWidth: '440px', zIndex: 100 }}>
         <div className="glass-card" style={{ marginBottom: 0, padding: '15px', display: 'flex', justifyContent: 'space-around', borderRadius: '30px' }}>
           <Heart color="var(--primary)" fill="var(--primary)" />
           <Activity color="var(--text-muted)" />
