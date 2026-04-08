@@ -13,6 +13,7 @@ const PpgScanner = ({ onResult, onCancel }) => {
   const lastPeak = useRef(0);
   const peaks = useRef([]);
   const requestRef = useRef();
+  const isScanningRef = useRef(false);
 
   useEffect(() => {
     startCamera();
@@ -37,14 +38,16 @@ const PpgScanner = ({ onResult, onCancel }) => {
         }
       }
       setScanning(true);
+      isScanningRef.current = true;
       requestRef.current = requestAnimationFrame(processFrame);
     } catch (err) {
-      setError("Camera access required for HemaPulse. Please allow camera and flash use.");
+      setError("Camera access required. Please allow camera use.");
       console.error(err);
     }
   };
 
   const stopCamera = () => {
+    isScanningRef.current = false;
     if (videoRef.current && videoRef.current.srcObject) {
       videoRef.current.srcObject.getTracks().forEach(track => track.stop());
     }
@@ -52,9 +55,10 @@ const PpgScanner = ({ onResult, onCancel }) => {
   };
 
   const processFrame = () => {
-    if (!videoRef.current || !canvasRef.current || !scanning) return;
-
-    const ctx = canvasRef.current.getContext('2d');
+    if (!videoRef.current || !canvasRef.current || !isScanningRef.current) return;
+    
+    if (videoRef.current.readyState >= 2) {
+      const ctx = canvasRef.current.getContext('2d');
     ctx.drawImage(videoRef.current, 0, 0, 100, 100);
     
     // Sample the center area
@@ -69,7 +73,7 @@ const PpgScanner = ({ onResult, onCancel }) => {
 
     // Filter and analyze
     updateSignal(avgRed);
-    
+    }
     requestRef.current = requestAnimationFrame(processFrame);
   };
 
@@ -99,15 +103,16 @@ const PpgScanner = ({ onResult, onCancel }) => {
         } else if (now - lastPeak.current > 1500) {
             lastPeak.current = now;
         }
+        
+        // ONLY progress the scan when a finger is covering the lens properly!
+        setProgress(prev => {
+            if (prev >= 100) {
+                finishScan();
+                return 100;
+            }
+            return prev + 0.3; // Make it a bit faster
+        });
     }
-
-    setProgress(prev => {
-        if (prev >= 100) {
-            finishScan();
-            return 100;
-        }
-        return prev + 0.1;
-    });
 
     drawChart();
   };
@@ -134,6 +139,7 @@ const PpgScanner = ({ onResult, onCancel }) => {
 
   const finishScan = () => {
     setScanning(false);
+    isScanningRef.current = false;
     const finalBpm = peaks.current.length > 0 
         ? Math.round(peaks.current.reduce((a, b) => a + b) / peaks.current.length) 
         : 75;
